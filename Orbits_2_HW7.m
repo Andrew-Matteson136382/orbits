@@ -192,11 +192,8 @@ MCI_gamma = -86*pi2deg;
 MCI_e = Fli_Rel.ecc(NRHO_ra, MCI_v, const.mu_moon, MCI_gamma);
 
 MCI_nu1 = [Fli_Rel.nu(NRHO_ra, MCI_v, const.mu_moon, MCI_gamma), pi+Fli_Rel.nu(NRHO_ra, MCI_v, const.mu_moon, MCI_gamma)];
-MCI_nu2 = [1/(sqrt(1+((NRHO_ra*MCI_v^2*sin(MCI_gamma)*cos(MCI_gamma) ...
-    /const.mu_moon)/(-1+NRHO_ra*MCI_v^2/const.mu_moon*cos(MCI_gamma)^ ...
-    2))^2)), -1/(sqrt(1+((NRHO_ra*MCI_v^2*sin(MCI_gamma)*cos(MCI_gamma) ...
-    /const.mu_moon)/(-1+NRHO_ra*MCI_v^2/const.mu_moon*cos(MCI_gamma)^2)) ...
-    ^2))];
-MCI_nu = quadcheck(MCI_nu1 MCI_nu2);
+MCI_nu2 = [acos(1/sqrt(1+((NRHO_ra*MCI_v^2/const.mu_moon*sin(MCI_gamma)*cos(MCI_gamma))/(-1+NRHO_ra*MCI_v^2/const.mu_moon*cos(MCI_gamma)^2))^2)), -acos(1/sqrt(1+((NRHO_ra*MCI_v^2/const.mu_moon*sin(MCI_gamma)*cos(MCI_gamma))/(-1+NRHO_ra*MCI_v^2/const.mu_moon*cos(MCI_gamma)^2))^2))];
+
+MCI_nu = quadcheck([MCI_nu1 MCI_nu2]);
 
 
