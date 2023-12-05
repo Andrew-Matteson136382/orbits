@@ -310,6 +310,7 @@ for i = 1:lenTD
 
     % Finds the R and V vectors for Luna wrt a time delay & time of flight 
     [PosArr(i,j,4,:), Luna_V_TOF] = Class2Cart(Luna_a, Luna_ecc, Luna_i, Luna_omega, Luna_Omega, Luna_nu_TOF, const.mu_earth,"unit","Rad");
+    VelArr(i,j,4,:) = Luna_V_TOF;
 
     %% ISS TD + TOF %%
 
@@ -332,6 +333,7 @@ for i = 1:lenTD
 
     % Finds the R and V vectors for the ISS wrt a time delay & time of flight
     [PosArr(i,j,3,:), ISS_V_TOF] = Class2Cart(ISS_a, ISS_ecc, ISS_i, ISS_omega, ISS_Omega, ISS_nu_TOF, const.mu_earth,"unit","Rad");
+    VelArr(i,j,3,:) = ISS_V_TOF;
 
 
     % Black box, finds transfers a, e, and velocities at points
@@ -375,6 +377,8 @@ vinf = min(VDelArr(:,:,2),[],"all");
 tdel = min(VDelArr(:,:,3),[],"all");
 [tdelTD,tdelTOF] = find(VDelArr(:,:,3)==tdel);
 
+tmp = squeeze(BB_VArr(vinfTD,vinflTOF,2,:))' - squeeze(VelArr(vinfTD,vinflTOF,4,:))';
+save("output.mat","tmp")
 
 figure(10)
 [X,Y,Z] = sphere;

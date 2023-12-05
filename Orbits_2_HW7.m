@@ -150,8 +150,53 @@ fgfunc.g = @(r0,r1,mu,p,delNu) r1*r0/((mu*p)^(1/2))*sin(delNu);
 
 %% NRHO
 
+Luna_Epoch = 2460235.5;
+Luna_a = 3.843233396654867*10^5;
+Luna_ecc = 3.913088756831110*10^-2;
+Luna_i = 2.832505621905977*10^1*deg2pi;
+Luna_Omega = 4.628106711973097*deg2pi;
+Luna_omega = 3.380320838890249*10^2*deg2pi;
+Luna_M = 2.643966828517082*10^2*deg2pi;
+Luna_tp = 2460242.743662629277;
+
+load('output.mat')
+ECI_vinf = tmp;
+
+Omega = 156*deg2pi;
+Theta = 0;
+
+DCM_E_M = [cos(Omega)*cos(Theta)-sin(Omega)*cos(Luna_i)*sin(Theta), -sin(Theta)*cos(Omega)-sin(Omega)*cos(Luna_i)*cos(Theta), sin(Omega)*sin(Luna_i);
+    sin(Omega)*cos(Theta)+cos(Omega)*cos(Luna_i)*sin(Theta), -sin(Omega)*sin(Theta)+cos(Omega)*cos(Luna_i)*cos(Theta), -cos(Omega)*sin(Luna_i);
+    sin(Luna_i)*sin(Theta), sin(Luna_i)*cos(Theta), cos(Luna_i)];
+MCI_vinf = ECI_vinf*DCM_E_M';
+MCI_vinf_Mag = vecnorm(MCI_vinf);
+
+MCI_a = Hype_Orb.a(const.mu_moon,MCI_vinf_Mag);
+
+MCI_n_hat = [cos(Omega), sin(Omega), 0];
+
+MCI_h = (cross(MCI_n_hat,MCI_vinf))/(vecnorm(cross(MCI_n_hat,MCI_vinf)));
+
+MCI_i = acos(dot(MCI_h,[0,0,1]));
+
 NRHO_P = 6.562*60*60*24;
 NRHO_rp = 3366;
-NRHO_a = Ell_Orb.a3(NRHO_P, const.mu_earth)
-NRHO_e = Ell_Orb.e1(NRHO_rp, NRHO_a)
+NRHO_a = Ell_Orb.a3(NRHO_P, const.mu_moon);
+NRHO_e = Ell_Orb.e1(NRHO_rp, NRHO_a);
+NRHO_ra = Ell_Orb.ra(NRHO_a, NRHO_e);
+
+MCI_v = Spe_Eng.v(const.mu_moon, NRHO_ra, MCI_a);
+
+MCI_gamma = -86*pi2deg;
+
+MCI_e = Fli_Rel.ecc(NRHO_ra, MCI_v, const.mu_moon, MCI_gamma);
+
+MCI_nu1 = [Fli_Rel.nu(NRHO_ra, MCI_v, const.mu_moon, MCI_gamma), pi+Fli_Rel.nu(NRHO_ra, MCI_v, const.mu_moon, MCI_gamma)];
+MCI_nu2 = [1/(sqrt(1+((NRHO_ra*MCI_v^2*sin(MCI_gamma)*cos(MCI_gamma) ...
+    /const.mu_moon)/(-1+NRHO_ra*MCI_v^2/const.mu_moon*cos(MCI_gamma)^ ...
+    2))^2)), -1/(sqrt(1+((NRHO_ra*MCI_v^2*sin(MCI_gamma)*cos(MCI_gamma) ...
+    /const.mu_moon)/(-1+NRHO_ra*MCI_v^2/const.mu_moon*cos(MCI_gamma)^2)) ...
+    ^2))];
+MCI_nu = quadcheck(MCI_nu1 MCI_nu2);
+
 

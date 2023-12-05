@@ -161,7 +161,7 @@ lenTOF = length(TOF);
 % TD (Time Delay)
 start = 0;
 inc = 30;
-stop = 86400/8;
+stop = 86400/4;
 TD = (start:inc:stop);
 lenTD = length(TD);
 
@@ -368,9 +368,15 @@ xlabel('Time of Departure (Hours)')
 title("Total VDel at " + ISS_Epoch + " (km/s)")
 
 % Finds the value and instant with the lowest total delta V
+vtli = min(VDelArr(:,:,1),[],"all");
+[tlilTD,tliTOF] = find(VDelArr(:,:,1)==vtli);
+vinf = min(VDelArr(:,:,2),[],"all");
+[vinfTD,vinflTOF] = find(VDelArr(:,:,2)==vinf);
 tdel = min(VDelArr(:,:,3),[],"all");
 [tdelTD,tdelTOF] = find(VDelArr(:,:,3)==tdel);
 
+tmp = squeeze(BB_VArr(vinfTD,vinflTOF,1,:)) - squeeze(Luna_V_TOF(vinfTD,vinflTOF));
+save "output.mat" "tmp"
 
 figure(10)
 [X,Y,Z] = sphere;
@@ -380,8 +386,8 @@ hold on
 surf(const.r_moon*X+PosArr(tdelTD,tdelTOF,2,1), Y*const.r_moon + PosArr(tdelTD,tdelTOF,2,2), Z*const.r_moon + PosArr(tdelTD,tdelTOF,2,3))
 surf(const.r_moon*X+PosArr(tdelTD,tdelTOF,4,1), Y*const.r_moon + PosArr(tdelTD,tdelTOF,4,2), Z*const.r_moon + PosArr(tdelTD,tdelTOF,4,3))
 
-plot3(PosArr(tdelTD,tdelTOF,1,1), PosArr(tdelTD,tdelTOF,1,2), PosArr(tdelTD,tdelTOF,1,3),'o','MarkerSize',10)
-plot3(PosArr(tdelTD,tdelTOF,3,1), PosArr(tdelTD,tdelTOF,3,2), PosArr(tdelTD,tdelTOF,3,3),'o','MarkerSize',10)
+plot3(PosArr(tdelTD,tdelTOF,1,1), PosArr(tdelTD,tdelTOF,1,2), PosArr(tdelTD,tdelTOF,1,3),'o','MarkerSize',10,"LineWidth",2)
+plot3(PosArr(tdelTD,tdelTOF,3,1), PosArr(tdelTD,tdelTOF,3,2), PosArr(tdelTD,tdelTOF,3,3),'o','MarkerSize',10,'LineWidth',2)
 
 %% Part 2: BB analysis
 
