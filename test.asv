@@ -1,0 +1,39 @@
+clear
+close all
+clc
+ % 
+ % Draw an arc between two points 
+ p1=[-2 -2 -3];
+ p2=[10 15 20];
+ % Circle x²+y²+z²=Constant
+ %=> z=sqrt(Constant-x²-y²-);
+ Center=((p2+p1))./2;
+ xc=Center(1);
+ yc=Center(2);
+ zc=Center(3);
+ % Radius
+ R=norm((p2-p1))/2;
+ %Min=min(min(p1,p2));
+ %Max=max(max(p1,p2));
+ %x=linspace(Min,Max,20);
+ %y=linspace(Min,Max,20);
+ x=linspace(p1(1),p2(1),200);
+ y=linspace(p1(2),p2(2),200);
+ z=zc+sqrt((R^2)-((x-xc).^2)-((y-yc).^2));
+ figure, plot3(x,y,z), grid on, hold on
+ plot3(p1(1),p1(2),p1(3),'*','MarkerSize',10),
+
+
+
+
+ def example_function(a, b: String, c = 2):
+ def list_function(*a:List<Int>):
+    for in a_i
+
+ list_function([a,d,g,e,Center])
+list_function(a,d,g,e,Center)
+
+    //TODO
+
+example_function(1, "a")
+axample_function(1, "a", 3)
