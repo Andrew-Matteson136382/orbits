@@ -45,6 +45,7 @@ Orbit.r = @(p, ecc, nu) p/(1+ecc*cos(nu));
 Orbit.p = @(r, ecc, nu) r*(1+ecc*cos(nu));
 Orbit.ecc = @(r, p, nu) (p/r-1)/cos(nu);
 Orbit.nu = @(r, p, ecc) acos((p./r-1)/ecc);
+Orbit.nu2 = @(r, p, ecc) asin(sqrt(1-((-1+p/r)/(ecc))^2));
 
 % Parameter Derivations
 Para.p1 = @(a, ecc) a*(1-ecc^2);
@@ -69,6 +70,7 @@ T_Hat.h = @(r, v, gamma) r.*v.*cos(gamma);
 R_Hat.v1 = @(v, gamma) v*sin(gamma);
 R_Hat.gamma1 = @(r_v, v) asin(r_v/v);
 R_Hat.nu = @(r_v, mu, h, ecc) asin((r_v.*h)./(mu*ecc));
+R_Hat.v2 = @(mu, ecc, nu, h) mu*ecc*sin(nu)/h;
 
 % Flight Relationships Derivations
 Fli_Rel.ecc = @(r, v, mu, gamma) sqrt(((((r*v^2)/mu-1)^2)*cos(gamma)^2) ...
@@ -162,7 +164,7 @@ Luna_tp = 2460242.743662629277;
 load('output.mat')
 ECI_vinf = tmp;
 
-Omega = 156*deg2pi;
+Omega = 0;
 Theta = 0;
 
 DCM_E_M = [cos(Omega)*cos(Theta)-sin(Omega)*cos(Luna_i)*sin(Theta), -sin(Theta)*cos(Omega)-sin(Omega)*cos(Luna_i)*cos(Theta), sin(Omega)*sin(Luna_i);
@@ -171,29 +173,65 @@ DCM_E_M = [cos(Omega)*cos(Theta)-sin(Omega)*cos(Luna_i)*sin(Theta), -sin(Theta)*
 MCI_vinf = ECI_vinf*DCM_E_M';
 MCI_vinf_Mag = vecnorm(MCI_vinf);
 
-MCI_a = Hype_Orb.a(const.mu_moon,MCI_vinf_Mag);
+MCI_hyp_a = Hype_Orb.a(const.mu_moon,MCI_vinf_Mag);
 
-MCI_n_hat = [cos(Omega), sin(Omega), 0];
+r_guess = 20000;
+gamma_guess = -pi/4;
+Omega_guess = pi/4;
 
-MCI_h = (cross(MCI_n_hat,MCI_vinf))/(vecnorm(cross(MCI_n_hat,MCI_vinf)));
+MCI_hyp_v = Spe_Eng.v(const.mu_moon, r_guess, MCI_hyp_a);
 
-MCI_i = acos(dot(MCI_h,[0,0,1]));
+MCI_hyp_e = Fli_Rel.ecc(r_guess, MCI_hyp_v, const.mu_moon, gamma_guess);
+MCI_hyp_p = Para.p1(MCI_hyp_a, MCI_hyp_e);
+MCI_hyp_h = Para.h1(MCI_hyp_p, const.mu_moon);
+
+MCI_hyp_vr = R_Hat.v1(MCI_hyp_v, gamma_guess);
+MCI_hyp_vt = T_Hat.v1(MCI_hyp_v, gamma_guess);
+MCI_hyp_vh = 0;
+MCI_hyp_vel = [MCI_hyp_vr, MCI_hyp_vt, MCI_hyp_vh];
 
 NRHO_P = 6.562*60*60*24;
 NRHO_rp = 3366;
 NRHO_a = Ell_Orb.a3(NRHO_P, const.mu_moon);
 NRHO_e = Ell_Orb.e1(NRHO_rp, NRHO_a);
 NRHO_ra = Ell_Orb.ra(NRHO_a, NRHO_e);
+NRHO_p = Para.p1(NRHO_a, NRHO_e);
+NRHO_nu1 = [Orbit.nu(r_guess, NRHO_p, NRHO_e), -Orbit.nu(r_guess, NRHO_p, NRHO_e)];
+NRHO_nu2 = Orbit.nu2(r_guess, NRHO_p, NRHO_e);
+NRHO_nu = quadcheck([])
 
-MCI_v = Spe_Eng.v(const.mu_moon, NRHO_ra, MCI_a);
 
-MCI_gamma = -86*pi2deg;
+MCI_hyp_nhat = [cos(Omega_guess), sin(Omega_guess), 0];
 
-MCI_e = Fli_Rel.ecc(NRHO_ra, MCI_v, const.mu_moon, MCI_gamma);
+MCI_hyp_hhat = (cross(MCI_hyp_nhat,MCI_vinf))/(vecnorm(cross(MCI_hyp_nhat,MCI_vinf)));
 
-MCI_nu1 = [Fli_Rel.nu(NRHO_ra, MCI_v, const.mu_moon, MCI_gamma), pi+Fli_Rel.nu(NRHO_ra, MCI_v, const.mu_moon, MCI_gamma)];
-MCI_nu2 = [acos(1/sqrt(1+((NRHO_ra*MCI_v^2/const.mu_moon*sin(MCI_gamma)*cos(MCI_gamma))/(-1+NRHO_ra*MCI_v^2/const.mu_moon*cos(MCI_gamma)^2))^2)), -acos(1/sqrt(1+((NRHO_ra*MCI_v^2/const.mu_moon*sin(MCI_gamma)*cos(MCI_gamma))/(-1+NRHO_ra*MCI_v^2/const.mu_moon*cos(MCI_gamma)^2))^2))];
+MCI_hyp_i = acos(dot(MCI_hyp_hhat,[0,0,1]));
 
-MCI_nu = quadcheck([MCI_nu1 MCI_nu2]);
+MCI_hyp_nu1 = [Fli_Rel.nu(r_guess, MCI_hyp_v, const.mu_moon, gamma_guess), pi+Fli_Rel.nu(r_guess, MCI_hyp_v, const.mu_moon, gamma_guess)];
+MCI_hyp_nu2 = [acos(1/sqrt(1+((r_guess*MCI_hyp_v^2/const.mu_moon*sin(gamma_guess)*cos(gamma_guess))/(-1+r_guess*MCI_hyp_v^2/const.mu_moon*cos(gamma_guess)^2))^2)), -acos(1/sqrt(1+((r_guess*MCI_hyp_v^2/const.mu_moon*sin(gamma_guess)*cos(gamma_guess))/(-1+r_guess*MCI_hyp_v^2/const.mu_moon*cos(gamma_guess)^2))^2))];
+MCI_hyp_nu = quadcheck([MCI_hyp_nu1 MCI_hyp_nu2]);
+
+MCI_hyp_TolDel = Hype_Orb.del(MCI_hyp_e);
+
+MCI_hyp_phi = asin((vecnorm(cross(MCI_hyp_nhat,MCI_vinf)))/(MCI_vinf_Mag));
+if dot(MCI_hyp_nhat,MCI_vinf)<0
+    MCI_hyp_phi = pi - MCI_hyp_phi;
+end
+
+MCI_hyp_beta = pi/2-(MCI_hyp_TolDel)/2;
+
+MCI_hyp_alpha = pi - MCI_hyp_phi;
+
+MCI_hyp_omega = pi-MCI_hyp_beta-MCI_hyp_alpha;
+
+DCM_hyp2cart = DCMArr(MCI_hyp_i, Omega_guess, MCI_hyp_nu+MCI_hyp_omega);
+
+MCI_hyp_cartvel = MCI_hyp_vel*DCM_hyp2cart';
+
+
+
+
+
+
 
 
